@@ -1,0 +1,5 @@
+name = "LL1266/untested"
+version = "0.1.0"
+readme = "README.md"
+repository = "https://gitlink.org.cn/LL1266/untested"
+license = "Apache-2.0"

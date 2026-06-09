@@ -1,0 +1,3 @@
+package "LL1266/untested"
+
+pub fn risky(Int) -> Int

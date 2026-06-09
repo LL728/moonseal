@@ -1,0 +1,5 @@
+name = "LL1266/partial"
+version = "0.1.0"
+readme = "README.md"
+repository = "https://gitlink.org.cn/LL1266/partial"
+license = "Apache-2.0"
