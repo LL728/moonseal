@@ -1,0 +1,117 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "LL1266/moonseal"
+
+// Values
+pub fn analyze_project(String) -> Result[QualityReport, SealError]
+
+pub fn default_policy() -> GatePolicy
+
+pub fn evaluate_gate(QualityReport, GatePolicy) -> GateResult
+
+pub fn format_error(SealError) -> String
+
+pub fn has_failure(GateResult, String) -> Bool
+
+pub fn has_warning(QualityReport, String) -> Bool
+
+pub fn mutation_plan(QualityReport) -> Array[MutationCandidate]
+
+pub fn parse_moon_mod(String) -> ModuleMeta
+
+pub fn parse_pkg_imports(String, String) -> Array[ImportInfo]
+
+pub fn render_gate(GateResult) -> String
+
+pub fn render_mutants(Array[MutationCandidate]) -> String
+
+pub fn render_report(QualityReport) -> String
+
+pub fn summarize(QualityReport) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct GatePolicy {
+  min_project_tests : Int
+  require_package_tests : Bool
+  require_tests_for_mutants : Bool
+  require_readme : Bool
+  require_license : Bool
+  require_ci : Bool
+} derive(Eq)
+
+pub(all) struct GateResult {
+  passed : Bool
+  failures : Array[String]
+  warnings : Array[String]
+} derive(Eq)
+
+pub(all) struct ImportInfo {
+  target : String
+  alias_name : String
+  owner : String
+} derive(Eq)
+
+pub(all) struct ModuleMeta {
+  name : String
+  version : String
+  readme : String
+  repository : String
+  license : String
+} derive(Eq)
+
+pub(all) struct MutationCandidate {
+  id : String
+  path : String
+  line : Int
+  kind : String
+  original : String
+  replacement : String
+} derive(Eq)
+
+pub(all) struct PackageQuality {
+  path : String
+  source_count : Int
+  test_count : Int
+  public_api_count : Int
+  warnings : Array[String]
+} derive(Eq)
+
+pub(all) struct QualityReport {
+  name : String
+  version : String
+  readme : String
+  repository : String
+  license : String
+  packages : Array[PackageQuality]
+  imports : Array[ImportInfo]
+  source_files : Array[SourceFile]
+  test_files : Array[TestFile]
+  mutation_candidates : Array[MutationCandidate]
+  warnings : Array[String]
+} derive(Eq)
+
+pub(all) enum SealError {
+  MissingProject(String)
+  MissingManifest(String)
+  FileReadFailed(String)
+} derive(Eq)
+
+pub(all) struct SourceFile {
+  path : String
+  package_path : String
+  is_test : Bool
+  digest : String
+  mutation_points : Int
+} derive(Eq)
+
+pub(all) struct TestFile {
+  path : String
+  package_path : String
+  kind : String
+} derive(Eq)
+
+// Type aliases
+
+// Traits
+
