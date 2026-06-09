@@ -6,6 +6,12 @@
 https://gitlink.org.cn/LL1266/moonseal
 ```
 
+补充仓库地址：
+
+```text
+https://github.com/LL728/L28L
+```
+
 ## 6. 项目名称
 
 ```text
