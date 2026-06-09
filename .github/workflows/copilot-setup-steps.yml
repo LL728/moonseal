@@ -1,0 +1,36 @@
+name: MoonSeal CI
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Show toolchain
+        run: moon version --all
+
+      - name: Check package interfaces
+        run: moon info
+
+      - name: Check formatting
+        run: moon fmt --check
+
+      - name: Run tests
+        run: moon test --target js
+
+      - name: Run quality gate examples
+        run: |
+          moon run --target js cmd/main -- scan fixtures/well_tested
+          moon run --target js cmd/main -- gate fixtures/well_tested
+          moon run --target js cmd/main -- mutants fixtures/mutation_targets
