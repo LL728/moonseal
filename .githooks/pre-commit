@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -eu
+moon info
+moon fmt --check
+moon test --target js
+moon run --target js cmd/main -- gate fixtures/well_tested
