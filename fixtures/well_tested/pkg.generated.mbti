@@ -1,0 +1,4 @@
+package "LL1266/well_tested"
+
+pub fn enabled(Bool) -> Bool
+pub fn score(Int) -> Int
