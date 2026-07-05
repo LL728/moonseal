@@ -84,6 +84,14 @@ test "gate fails partially tested package layout" {
 }
 
 ///|
+test "gate accepts alternate workflow filenames" {
+  let report = report_ok("fixtures/alt_workflow")
+  let gate = @moonseal.evaluate_gate(report, @moonseal.default_policy())
+  assert_true(gate.passed)
+  assert_false(@moonseal.has_warning(report, "missing CI workflow"))
+}
+
+///|
 test "mutation plan reports stable candidates" {
   let report = report_ok("fixtures/mutation_targets")
   let mutants = @moonseal.mutation_plan(report)
