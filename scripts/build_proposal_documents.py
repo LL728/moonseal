@@ -85,7 +85,7 @@ def add_metadata_table(doc):
         ("项目名称", "MoonSeal"),
         ("项目方向", "软件分析框架 / 工程质量工具"),
         ("GitLink 仓库", "https://gitlink.org.cn/LL1266/moonseal"),
-        ("GitHub 仓库", "https://github.com/LL728/L28L"),
+        ("GitHub 仓库", "https://github.com/LL728/moonseal"),
         ("开源协议", "Apache-2.0"),
     ]
     for row, (key, value) in zip(table.rows, rows):
@@ -223,7 +223,7 @@ def build_pdf(sections):
             ["项目名称", "MoonSeal"],
             ["项目方向", "软件分析框架 / 工程质量工具"],
             ["GitLink 仓库", "https://gitlink.org.cn/LL1266/moonseal"],
-            ["GitHub 仓库", "https://github.com/LL728/L28L"],
+            ["GitHub 仓库", "https://github.com/LL728/moonseal"],
             ["开源协议", "Apache-2.0"],
         ],
         colWidths=[32 * mm, 128 * mm],
