@@ -363,7 +363,7 @@ fn collect_project_warnings(
   if !array_has(files, "LICENSE") {
     warnings.push("missing LICENSE")
   }
-  if !array_has(files, ".github/workflows/ci.yml") {
+  if !has_ci_workflow(files) {
     warnings.push("missing CI workflow")
   }
   if !meta.name.contains("/") {
@@ -680,6 +680,17 @@ fn pad4(value : Int) -> String {
 fn array_has(items : Array[String], value : String) -> Bool {
   for item in items {
     if item == value {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn has_ci_workflow(files : Array[String]) -> Bool {
+  for file in files {
+    if file.has_prefix(".github/workflows/") &&
+      (file.has_suffix(".yml") || file.has_suffix(".yaml")) {
       return true
     }
   }
