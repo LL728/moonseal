@@ -1,33 +1,41 @@
-# Submission Guide
+# MoonSeal Submission Guide
 
-## 5. GitLink 仓库链接
+## Repository Links
+
+GitLink:
 
 ```text
 https://gitlink.org.cn/LL1266/moonseal
 ```
 
-补充仓库地址：
+GitHub mirror:
 
 ```text
-https://github.com/LL728/L28L
+https://github.com/LL728/moonseal
 ```
 
-## 6. 项目名称
+## Project Name
 
 ```text
 MoonSeal：MoonBit 测试充分性与发布质量门禁工具
 ```
 
-## 7. 项目申报书
-
-Upload:
+## Proposal Upload
 
 ```text
 docs/competition/MoonSeal项目申报书.pdf
 ```
 
-The editable document is:
+Editable source:
 
 ```text
 docs/competition/MoonSeal项目申报书.docx
 ```
+
+## Acceptance Notes
+
+- Use GitLink as the competition repository link.
+- Keep GitHub synchronized as the public mirror repository.
+- Keep the Mooncakes package name aligned with `moon.mod`:
+  `LL1266/moonseal`.
+- Use `docs/closeout.md` as the single entry for the final verification record.
