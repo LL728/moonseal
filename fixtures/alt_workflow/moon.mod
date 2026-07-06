@@ -1,0 +1,5 @@
+name = "LL1266/alt_workflow"
+version = "0.1.0"
+readme = "README.md"
+repository = "https://github.com/LL728/moonseal"
+license = "Apache-2.0"
