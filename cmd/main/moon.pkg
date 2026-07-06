@@ -1,6 +1,6 @@
 import {
   "moonbitlang/core/env",
-  "LL1266/moonseal" @lib,
+  "LL728/moonseal" @lib,
 }
 
 options(

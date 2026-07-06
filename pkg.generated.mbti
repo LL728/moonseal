@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "LL1266/moonseal"
+package "LL728/moonseal"
 
 // Values
 pub fn analyze_project(String) -> Result[QualityReport, SealError]

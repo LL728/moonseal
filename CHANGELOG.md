@@ -6,6 +6,7 @@
   repository review
 - corrected the GitHub mirror reference to `LL728/moonseal` in repository
   materials
+- aligned the Mooncakes publication identity to `LL728/moonseal`
 - standardized the CI entrypoint as `.github/workflows/ci.yml`
 - relaxed CI workflow detection so any workflow file under
   `.github/workflows/` satisfies the release gate

@@ -5,7 +5,7 @@
 - Project name: `MoonSeal：MoonBit 测试充分性与发布质量门禁工具`
 - Competition repository: `https://gitlink.org.cn/LL1266/moonseal`
 - Public mirror: `https://github.com/LL728/moonseal`
-- Mooncakes package: `LL1266/moonseal`
+- Mooncakes package: `LL728/moonseal`
 
 ## What This Closeout Refresh Adds
 

@@ -9,13 +9,13 @@
 //   "moonbitlang/x@0.4.6",
 // }
 
-name = "LL1266/moonseal"
+name = "LL728/moonseal"
 
 version = "0.1.0"
 
 readme = "README.md"
 
-repository = "https://gitlink.org.cn/LL1266/moonseal"
+repository = "https://github.com/LL728/moonseal"
 
 license = "Apache-2.0"
 

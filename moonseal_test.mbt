@@ -10,16 +10,16 @@ fn report_ok(path : String) -> @moonseal.QualityReport {
 ///|
 test "parse moon.mod metadata" {
   let manifest =
-    #|name = "LL1266/moonseal"
+    #|name = "LL728/moonseal"
     #|version = "0.1.0"
     #|readme = "README.md"
-    #|repository = "https://gitlink.org.cn/LL1266/moonseal"
+    #|repository = "https://github.com/LL728/moonseal"
     #|license = "Apache-2.0"
     #|
   let meta = @moonseal.parse_moon_mod(manifest)
-  assert_eq(meta.name, "LL1266/moonseal")
+  assert_eq(meta.name, "LL728/moonseal")
   assert_eq(meta.version, "0.1.0")
-  assert_eq(meta.repository, "https://gitlink.org.cn/LL1266/moonseal")
+  assert_eq(meta.repository, "https://github.com/LL728/moonseal")
   assert_eq(meta.license, "Apache-2.0")
 }
 
@@ -28,14 +28,14 @@ test "parse moon.pkg imports" {
   let pkg =
     #|import {
     #|  "moonbitlang/core/json" @json,
-    #|  "LL1266/moonseal/internal" @internal,
+    #|  "LL728/moonseal/internal" @internal,
     #|}
     #|
   let imports = @moonseal.parse_pkg_imports("cmd/main", pkg)
   assert_eq(imports.length(), 2)
   assert_eq(imports[0].target, "moonbitlang/core/json")
   assert_eq(imports[0].alias_name, "json")
-  assert_eq(imports[1].owner, "LL1266")
+  assert_eq(imports[1].owner, "LL728")
 }
 
 ///|

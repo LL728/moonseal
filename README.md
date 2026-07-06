@@ -107,6 +107,7 @@ checks.
 
 - GitLink repository: `https://gitlink.org.cn/LL1266/moonseal`
 - GitHub mirror: `https://github.com/LL728/moonseal`
+- Mooncakes package: `LL728/moonseal`
 - Proposal source: `docs/competition/proposal.md`
 - Proposal PDF: `docs/competition/MoonSeal项目申报书.pdf`
 - Acceptance checklist: `docs/acceptance-checklist.md`

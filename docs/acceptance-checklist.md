@@ -36,4 +36,4 @@
 - [ ] Proposal PDF path:
       `docs/competition/MoonSeal项目申报书.pdf`
 - [ ] Mooncakes package:
-      `LL1266/moonseal`
+      `LL728/moonseal`

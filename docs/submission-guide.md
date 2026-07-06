@@ -37,5 +37,5 @@ docs/competition/MoonSeal项目申报书.docx
 - Use GitLink as the competition repository link.
 - Keep GitHub synchronized as the public mirror repository.
 - Keep the Mooncakes package name aligned with `moon.mod`:
-  `LL1266/moonseal`.
+  `LL728/moonseal`.
 - Use `docs/closeout.md` as the single entry for the final verification record.
