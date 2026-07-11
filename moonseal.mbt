@@ -50,6 +50,14 @@ pub(all) struct MutationCandidate {
 } derive(Eq)
 
 ///|
+pub(all) struct FileCoverage {
+  path : String
+  covered : Int
+  total : Int
+  percentage : Int
+} derive(Eq)
+
+///|
 pub(all) struct QualityReport {
   name : String
   version : String
@@ -62,6 +70,12 @@ pub(all) struct QualityReport {
   test_files : Array[TestFile]
   mutation_candidates : Array[MutationCandidate]
   warnings : Array[String]
+  mutation_score : Int
+  mutants_killed : Int
+  mutants_tested : Int
+  survived_mutants : Array[MutationCandidate]
+  coverage_total_percentage : Int
+  coverage_files : Array[FileCoverage]
 } derive(Eq)
 
 ///|
@@ -72,6 +86,8 @@ pub(all) struct GatePolicy {
   require_readme : Bool
   require_license : Bool
   require_ci : Bool
+  min_mutation_score : Int
+  min_coverage : Int
 } derive(Eq)
 
 ///|
@@ -97,6 +113,8 @@ pub fn default_policy() -> GatePolicy {
     require_readme: true,
     require_license: true,
     require_ci: true,
+    min_mutation_score: 0,
+    min_coverage: 0,
   }
 }
 
@@ -160,11 +178,18 @@ pub fn analyze_project(path : String) -> Result[QualityReport, SealError] {
     test_files: tests,
     mutation_candidates: mutants,
     warnings,
+    mutation_score: 0,
+    mutants_killed: 0,
+    mutants_tested: 0,
+    survived_mutants: [],
+    coverage_total_percentage: 0,
+    coverage_files: [],
   })
 }
 
 ///|
 pub fn parse_moon_mod(input : String) -> ModuleMeta {
+  let input = input.replace_all(old="\r\n", new="\n")
   {
     name: quoted_field(input, "name"),
     version: quoted_field(input, "version"),
@@ -179,6 +204,7 @@ pub fn parse_pkg_imports(
   package_path : String,
   input : String,
 ) -> Array[ImportInfo] {
+  let input = input.replace_all(old="\r\n", new="\n")
   let imports : Array[ImportInfo] = []
   for raw_line in input.split("\n") {
     let line = raw_line.trim().to_owned()
@@ -242,6 +268,15 @@ pub fn render_report(report : QualityReport) -> String {
   out.write_string(
     "mutation-candidates: \{report.mutation_candidates.length()}\n",
   )
+  if report.mutants_tested > 0 {
+    out.write_string("mutation-testing: tested=\{report.mutants_tested} killed=\{report.mutants_killed} score=\{report.mutation_score}%\n")
+  }
+  if report.coverage_total_percentage > 0 || report.coverage_files.length() > 0 {
+    out.write_string("code-coverage: total=\{report.coverage_total_percentage}%\n")
+    for f in report.coverage_files {
+      out.write_string("  \{f.path}: \{f.percentage}% (\{f.covered}/\{f.total})\n")
+    }
+  }
   for pkg in report.packages {
     out.write_string(
       "package: \{pkg.path} sources=\{pkg.source_count} tests=\{pkg.test_count} public-api=\{pkg.public_api_count}\n",
@@ -403,6 +438,7 @@ fn collect_mutants_for_file(
   content : String,
   offset : Int,
 ) -> Array[MutationCandidate] {
+  let content = content.replace_all(old="\r\n", new="\n")
   let candidates : Array[MutationCandidate] = []
   let mut line_no = 0
   for view in content.split("\n") {
@@ -567,7 +603,7 @@ fn count_public_api(root : String, package_path : String) -> Int {
   if !fs_exists(interface_path) {
     return 0
   }
-  let content = fs_read(interface_path)
+  let content = fs_read(interface_path).replace_all(old="\r\n", new="\n")
   let mut count = 0
   for raw_line in content.split("\n") {
     let line = raw_line.trim().to_owned()
@@ -611,6 +647,7 @@ fn package_path_of(file : String) -> String {
 
 ///|
 fn quoted_field(input : String, key : String) -> String {
+  let input = input.replace_all(old="\r\n", new="\n")
   for raw_line in input.split("\n") {
     let line = raw_line.trim().to_owned()
     if line.has_prefix(key + " ") || line.has_prefix(key + "=") {
@@ -733,3 +770,352 @@ extern "js" fn fs_list_files(root : String) -> Array[String] =
   #|  walk(root, "");
   #|  return out;
   #|}
+
+///|
+extern "js" fn fs_write(path : String, content : String) -> Unit =
+  #|(path, content) => require("fs").writeFileSync(path, content, "utf8")
+
+///|
+extern "js" fn exec_sync(cmd : String, cwd : String) -> Int =
+  #|(cmd, cwd) => {
+  #|  try {
+  #|    require("child_process").execSync(cmd, { cwd: cwd, stdio: "ignore" });
+  #|    return 0;
+  #|  } catch (e) {
+  #|    return 1;
+  #|  }
+  #|}
+
+///|
+extern "js" fn exec_output(cmd : String, cwd : String) -> String =
+  #|(cmd, cwd) => {
+  #|  try {
+  #|    return require("child_process").execSync(cmd, { cwd: cwd, encoding: "utf8" });
+  #|  } catch (e) {
+  #|    return "";
+  #|  }
+  #|}
+
+///|
+fn get_bool(map : Map[String, Json], key : String, default : Bool) -> Bool {
+  match map.get(key) {
+    Some(True) => true
+    Some(False) => false
+    _ => default
+  }
+}
+
+///|
+fn get_int(map : Map[String, Json], key : String, default : Int) -> Int {
+  match map.get(key) {
+    Some(Number(v, ..)) => v.to_int()
+    _ => default
+  }
+}
+
+///|
+pub fn load_policy(root : String) -> GatePolicy {
+  let default = default_policy()
+  let config_path = join_path(root, "moonseal.json")
+  if !fs_exists(config_path) {
+    return default
+  }
+  let content = fs_read(config_path)
+  try {
+    let json = @json.parse(content)
+    match json {
+      Object(m) => {
+        let min_project_tests = get_int(m, "min_project_tests", default.min_project_tests)
+        let require_package_tests = get_bool(m, "require_package_tests", default.require_package_tests)
+        let require_tests_for_mutants = get_bool(m, "require_tests_for_mutants", default.require_tests_for_mutants)
+        let require_readme = get_bool(m, "require_readme", default.require_readme)
+        let require_license = get_bool(m, "require_license", default.require_license)
+        let require_ci = get_bool(m, "require_ci", default.require_ci)
+        let min_mutation_score = get_int(m, "min_mutation_score", default.min_mutation_score)
+        let min_coverage = get_int(m, "min_coverage", default.min_coverage)
+        {
+          min_project_tests,
+          require_package_tests,
+          require_tests_for_mutants,
+          require_readme,
+          require_license,
+          require_ci,
+          min_mutation_score,
+          min_coverage,
+        }
+      }
+      _ => default
+    }
+  } catch {
+    _ => default
+  }
+}
+
+///|
+fn mutate_line_content(line : String, original : String, replacement : String) -> String {
+  let index = line.find(original)
+  match index {
+    Some(idx) => {
+      let before = line[:idx].to_owned()
+      let after = line[idx + original.length():].to_owned()
+      before + replacement + after
+    }
+    None => line
+  }
+}
+
+///|
+fn mutate_file_content(content : String, line_no : Int, original : String, replacement : String) -> String {
+  let lines = content.replace_all(old="\r\n", new="\n").split("\n").map(fn(s) { s.to_owned() }).to_array()
+  if line_no > 0 && line_no <= lines.length() {
+    lines[line_no - 1] = mutate_line_content(lines[line_no - 1], original, replacement)
+  }
+  let out = StringBuilder()
+  for i in 0..<lines.length() {
+    out.write_string(lines[i])
+    if i < lines.length() - 1 {
+      out.write_string("\n")
+    }
+  }
+  out.to_string()
+}
+
+///|
+pub fn run_mutation_testing(
+  root : String,
+  candidates : Array[MutationCandidate],
+) -> (Int, Int, Int, Array[MutationCandidate]) {
+  let survived : Array[MutationCandidate] = []
+  let mut killed = 0
+  for candidate in candidates {
+    let file_path = join_path(root, candidate.path)
+    if !fs_exists(file_path) {
+      continue
+    }
+    let original_content = fs_read(file_path)
+    let mutated_content = mutate_file_content(original_content, candidate.line, candidate.original, candidate.replacement)
+    fs_write(file_path, mutated_content)
+    
+    // Run the test suite using our wrapper to ensure it runs correctly on the CI
+    let exit_code = exec_sync("moon test --target js", root)
+    if exit_code != 0 {
+      killed += 1
+    } else {
+      survived.push(candidate)
+    }
+    fs_write(file_path, original_content)
+  }
+  let total = candidates.length()
+  let score = if total == 0 {
+    100
+  } else {
+    killed * 100 / total
+  }
+  (total, killed, score, survived)
+}
+
+///|
+fn parse_int(s : String) -> Int {
+  let mut val = 0
+  for ch in s {
+    let code = ch.to_int()
+    if code >= 48 && code <= 57 {
+      val = val * 10 + (code - 48)
+    }
+  }
+  val
+}
+
+///|
+pub fn run_coverage_analysis(root : String) -> (Int, Array[FileCoverage]) {
+  ignore(exec_sync("moon test --target js --enable-coverage", root))
+  let output = exec_output("moon coverage report -f summary", root)
+  let files : Array[FileCoverage] = []
+  let mut total_pct = 0
+  let lines = output.replace_all(old="\r\n", new="\n").split("\n").map(fn(s) { s.to_owned() }).to_array()
+  for line in lines {
+    let trimmed = line.trim().to_owned()
+    if trimmed.length() == 0 {
+      continue
+    }
+    let colon_idx = trimmed.find(":")
+    match colon_idx {
+      Some(idx) => {
+        let name = trimmed[:idx].to_owned().trim().to_owned()
+        let frac_str = trimmed[idx + 1:].to_owned().trim().to_owned()
+        let slash_idx = frac_str.find("/")
+        match slash_idx {
+          Some(s_idx) => {
+            let covered_str = frac_str[:s_idx].to_owned().trim().to_owned()
+            let total_str = frac_str[s_idx + 1:].to_owned().trim().to_owned()
+            let covered = parse_int(covered_str)
+            let total = parse_int(total_str)
+            let pct = if total == 0 {
+              100
+            } else {
+              covered * 100 / total
+            }
+            if name == "Total" {
+              total_pct = pct
+            } else {
+              files.push({
+                path: name,
+                covered,
+                total,
+                percentage: pct,
+              })
+            }
+          }
+          None => ()
+        }
+      }
+      None => ()
+    }
+  }
+  (total_pct, files)
+}
+
+///|
+pub impl ToJson for ImportInfo with to_json(self : ImportInfo) -> Json {
+  Json::object({
+    "target": Json::string(self.target),
+    "alias_name": Json::string(self.alias_name),
+    "owner": Json::string(self.owner),
+  })
+}
+
+///|
+pub impl ToJson for SourceFile with to_json(self : SourceFile) -> Json {
+  Json::object({
+    "path": Json::string(self.path),
+    "package_path": Json::string(self.package_path),
+    "is_test": Json::boolean(self.is_test),
+    "digest": Json::string(self.digest),
+    "mutation_points": Json::number(self.mutation_points.to_double()),
+  })
+}
+
+///|
+pub impl ToJson for TestFile with to_json(self : TestFile) -> Json {
+  Json::object({
+    "path": Json::string(self.path),
+    "package_path": Json::string(self.package_path),
+    "kind": Json::string(self.kind),
+  })
+}
+
+///|
+pub impl ToJson for PackageQuality with to_json(self : PackageQuality) -> Json {
+  let warnings = Array::new()
+  for w in self.warnings {
+    warnings.push(Json::string(w))
+  }
+  Json::object({
+    "path": Json::string(self.path),
+    "source_count": Json::number(self.source_count.to_double()),
+    "test_count": Json::number(self.test_count.to_double()),
+    "public_api_count": Json::number(self.public_api_count.to_double()),
+    "warnings": Json::array(warnings),
+  })
+}
+
+///|
+pub impl ToJson for MutationCandidate with to_json(self : MutationCandidate) -> Json {
+  Json::object({
+    "id": Json::string(self.id),
+    "path": Json::string(self.path),
+    "line": Json::number(self.line.to_double()),
+    "kind": Json::string(self.kind),
+    "original": Json::string(self.original),
+    "replacement": Json::string(self.replacement),
+  })
+}
+
+///|
+pub impl ToJson for FileCoverage with to_json(self : FileCoverage) -> Json {
+  Json::object({
+    "path": Json::string(self.path),
+    "covered": Json::number(self.covered.to_double()),
+    "total": Json::number(self.total.to_double()),
+    "percentage": Json::number(self.percentage.to_double()),
+  })
+}
+
+///|
+pub impl ToJson for QualityReport with to_json(self : QualityReport) -> Json {
+  let packages = Array::new()
+  for p in self.packages {
+    packages.push(p.to_json())
+  }
+  let imports = Array::new()
+  for i in self.imports {
+    imports.push(i.to_json())
+  }
+  let source_files = Array::new()
+  for sf in self.source_files {
+    source_files.push(sf.to_json())
+  }
+  let test_files = Array::new()
+  for tf in self.test_files {
+    test_files.push(tf.to_json())
+  }
+  let mutation_candidates = Array::new()
+  for mc in self.mutation_candidates {
+    mutation_candidates.push(mc.to_json())
+  }
+  let warnings = Array::new()
+  for w in self.warnings {
+    warnings.push(Json::string(w))
+  }
+  let survived_mutants = Array::new()
+  for sm in self.survived_mutants {
+    survived_mutants.push(sm.to_json())
+  }
+  let coverage_files = Array::new()
+  for cf in self.coverage_files {
+    coverage_files.push(cf.to_json())
+  }
+  
+  Json::object({
+    "name": Json::string(self.name),
+    "version": Json::string(self.version),
+    "readme": Json::string(self.readme),
+    "repository": Json::string(self.repository),
+    "license": Json::string(self.license),
+    "packages": Json::array(packages),
+    "imports": Json::array(imports),
+    "source_files": Json::array(source_files),
+    "test_files": Json::array(test_files),
+    "mutation_candidates": Json::array(mutation_candidates),
+    "warnings": Json::array(warnings),
+    "mutation_score": Json::number(self.mutation_score.to_double()),
+    "mutants_killed": Json::number(self.mutants_killed.to_double()),
+    "mutants_tested": Json::number(self.mutants_tested.to_double()),
+    "survived_mutants": Json::array(survived_mutants),
+    "coverage_total_percentage": Json::number(self.coverage_total_percentage.to_double()),
+    "coverage_files": Json::array(coverage_files),
+  })
+}
+
+///|
+pub impl ToJson for GateResult with to_json(self : GateResult) -> Json {
+  let failures = Array::new()
+  for f in self.failures {
+    failures.push(Json::string(f))
+  }
+  let warnings = Array::new()
+  for w in self.warnings {
+    warnings.push(Json::string(w))
+  }
+  Json::object({
+    "passed": Json::boolean(self.passed),
+    "failures": Json::array(failures),
+    "warnings": Json::array(warnings),
+  })
+}
+
+
+
+
+
+

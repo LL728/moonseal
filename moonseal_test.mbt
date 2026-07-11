@@ -117,3 +117,21 @@ test "summary and report text" {
   assert_true(text.contains("source-files: 3"))
   assert_true(text.contains("test-files: 3"))
 }
+
+///|
+test "JSON serialization for report structures" {
+  let report = report_ok("fixtures/well_tested")
+  let json_str = report.to_json().stringify()
+  assert_true(json_str.contains("\"name\":\"LL1266/well_tested\""))
+  assert_true(json_str.contains("\"version\":\"0.1.0\""))
+  assert_true(json_str.contains("\"packages\""))
+}
+
+///|
+test "load policy default behavior" {
+  let policy = @moonseal.load_policy("fixtures/well_tested")
+  let default_p = @moonseal.default_policy()
+  assert_eq(policy.min_project_tests, default_p.min_project_tests)
+  assert_eq(policy.min_mutation_score, default_p.min_mutation_score)
+  assert_eq(policy.min_coverage, default_p.min_coverage)
+}

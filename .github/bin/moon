@@ -1,0 +1,24 @@
+#!/bin/bash
+# Find the real moon executable
+REAL_MOON="$HOME/.moon/bin/moon"
+if [ ! -f "$REAL_MOON" ]; then
+  REAL_MOON=$(which -a moon | grep -v "$0" | head -n 1)
+fi
+
+# Parse and clean arguments
+ARGS=()
+CMD_NAME="$1"
+
+for arg in "$@"; do
+  if [ "$arg" = "--deny-warn" ]; then
+    if [ "$CMD_NAME" = "check" ] || [ "$CMD_NAME" = "test" ] || [ "$CMD_NAME" = "build" ]; then
+      ARGS+=("$arg")
+    elif [ "$CMD_NAME" = "fmt" ]; then
+      ARGS+=("--check")
+    fi
+  else
+    ARGS+=("$arg")
+  fi
+done
+
+exec "$REAL_MOON" "${ARGS[@]}"

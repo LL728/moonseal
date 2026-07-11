@@ -14,6 +14,8 @@ pub fn has_failure(GateResult, String) -> Bool
 
 pub fn has_warning(QualityReport, String) -> Bool
 
+pub fn load_policy(String) -> GatePolicy
+
 pub fn mutation_plan(QualityReport) -> Array[MutationCandidate]
 
 pub fn parse_moon_mod(String) -> ModuleMeta
@@ -26,11 +28,23 @@ pub fn render_mutants(Array[MutationCandidate]) -> String
 
 pub fn render_report(QualityReport) -> String
 
+pub fn run_coverage_analysis(String) -> (Int, Array[FileCoverage])
+
+pub fn run_mutation_testing(String, Array[MutationCandidate]) -> (Int, Int, Int, Array[MutationCandidate])
+
 pub fn summarize(QualityReport) -> String
 
 // Errors
 
 // Types and methods
+pub(all) struct FileCoverage {
+  path : String
+  covered : Int
+  total : Int
+  percentage : Int
+} derive(Eq)
+pub impl ToJson for FileCoverage
+
 pub(all) struct GatePolicy {
   min_project_tests : Int
   require_package_tests : Bool
@@ -38,6 +52,8 @@ pub(all) struct GatePolicy {
   require_readme : Bool
   require_license : Bool
   require_ci : Bool
+  min_mutation_score : Int
+  min_coverage : Int
 } derive(Eq)
 
 pub(all) struct GateResult {
@@ -45,12 +61,14 @@ pub(all) struct GateResult {
   failures : Array[String]
   warnings : Array[String]
 } derive(Eq)
+pub impl ToJson for GateResult
 
 pub(all) struct ImportInfo {
   target : String
   alias_name : String
   owner : String
 } derive(Eq)
+pub impl ToJson for ImportInfo
 
 pub(all) struct ModuleMeta {
   name : String
@@ -68,6 +86,7 @@ pub(all) struct MutationCandidate {
   original : String
   replacement : String
 } derive(Eq)
+pub impl ToJson for MutationCandidate
 
 pub(all) struct PackageQuality {
   path : String
@@ -76,6 +95,7 @@ pub(all) struct PackageQuality {
   public_api_count : Int
   warnings : Array[String]
 } derive(Eq)
+pub impl ToJson for PackageQuality
 
 pub(all) struct QualityReport {
   name : String
@@ -89,7 +109,14 @@ pub(all) struct QualityReport {
   test_files : Array[TestFile]
   mutation_candidates : Array[MutationCandidate]
   warnings : Array[String]
+  mutation_score : Int
+  mutants_killed : Int
+  mutants_tested : Int
+  survived_mutants : Array[MutationCandidate]
+  coverage_total_percentage : Int
+  coverage_files : Array[FileCoverage]
 } derive(Eq)
+pub impl ToJson for QualityReport
 
 pub(all) enum SealError {
   MissingProject(String)
@@ -104,12 +131,14 @@ pub(all) struct SourceFile {
   digest : String
   mutation_points : Int
 } derive(Eq)
+pub impl ToJson for SourceFile
 
 pub(all) struct TestFile {
   path : String
   package_path : String
   kind : String
 } derive(Eq)
+pub impl ToJson for TestFile
 
 // Type aliases
 

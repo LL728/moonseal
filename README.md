@@ -1,107 +1,67 @@
 # MoonSeal
 
-MoonSeal is a MoonBit release-readiness checker for MoonBit repositories.
-It answers a narrow but practical question before a release, competition
-submission, or package publish: does this project show enough testing signals
-to be treated as ready for review?
-
-The project stays intentionally small. It does not run user test suites,
-rewrite source files, or pretend to compute full coverage. Instead, it scans a
-repository, classifies packages and test files, counts exported API entries,
-collects simple mutation candidates, and produces a stable gate result that can
-be consumed by humans or CI logs.
-
-## Problem Background
-
-MoonBit projects already have good build and test commands, but release checks
-are often scattered across README habits, local scripts, and manual review.
-MoonSeal packages a lightweight pre-release checklist into a single tool:
-
-- find packages that contain source files but no tests
-- distinguish blackbox and whitebox tests
-- count public declarations from generated interface files
-- surface missing project materials such as README, license, or CI workflow
-- produce a default PASS/FAIL gate that can be repeated in local checks or CI
+MoonSeal is a MoonBit release-readiness checker and test adequacy gate tool for MoonBit repositories.
+It answers a critical question before a release, competition submission, or package publish: does this project show enough testing signals and quality gate metrics to be treated as ready for review?
 
 ## Core Capabilities
 
-- Parse `moon.mod` and `moon.pkg` to discover project structure.
-- Classify `.mbt`, `_test.mbt`, and `_wbtest.mbt` files by package.
-- Count public API declarations from `pkg.generated.mbti`.
-- Build package-level test adequacy summaries.
-- Generate stable mutation candidates for boolean, comparison, logical, and
-  integer-boundary edits.
-- Evaluate a default release gate over tests, package coverage, README,
-  license, and CI workflow presence.
-- Expose a small CLI with `scan`, `gate`, `mutants`, and `explain`.
+- **Project Scanning**: Parse `moon.mod` and `moon.pkg` to discover project structure and classify `.mbt` source, black-box, and white-box test files.
+- **Configurable Strategies**: Load and enforce release gate policies from a local `moonseal.json` configuration file.
+- **JSON Machine-Readable Output**: Support exporting reports in clean, structured JSON format for CI/CD pipeline automation and machine consumption.
+- **Mutation Testing Execution Engine**: Statically extract and dynamically run mutation testing by temporarily applying mutations (boolean flips, comparison boundary shifts, integer boundaries, logical operators) and executing the test suite to calculate a mutation adequacy score.
+- **Code Coverage Parser**: Integrate with MoonBit's native coverage tool to run tests with coverage enabled, parse the summary report, and assert minimum coverage requirements.
+- **CLI Wrappers for `--deny-warn`**: Provide local wrapper scripts for Linux/macOS and Windows to ensure smooth execution of `--deny-warn` commands in CI environments using newer MoonBit toolchains (0.10.3+).
 
 ## CLI Commands
 
-MoonSeal currently targets the MoonBit JavaScript backend because it needs
-filesystem access during repository scanning.
+MoonSeal targets the MoonBit JavaScript/Node.js backend because it needs filesystem and child-process access during analysis.
 
 ```bash
+# Run unit tests
 moon test --target js
+
+# Basic scan and release gate check
 moon run --target js cmd/main -- scan <project>
 moon run --target js cmd/main -- gate <project>
-moon run --target js cmd/main -- mutants <project>
-moon run --target js cmd/main -- explain <project>
+
+# Run dynamic mutation testing and code coverage checks
+moon run --target js cmd/main -- scan <project> --mutate --coverage
+moon run --target js cmd/main -- gate <project> --mutate --coverage
+
+# Output machine-readable JSON reports
+moon run --target js cmd/main -- scan <project> --json --mutate --coverage
+moon run --target js cmd/main -- gate <project> --json --mutate --coverage
+
+# Utility subcommands
+moon run --target js cmd/main -- mutants <project> [--json]
+moon run --target js cmd/main -- explain <project> [--json]
 ```
 
-## Minimal Example
+## Configurable Policy (`moonseal.json`)
 
-```bash
-moon run --target js cmd/main -- scan fixtures/well_tested
-moon run --target js cmd/main -- gate fixtures/well_tested
-moon run --target js cmd/main -- gate fixtures/untested
-moon run --target js cmd/main -- explain fixtures/well_tested
+To customize your project's release quality gate, create a `moonseal.json` in the root of your project:
+
+```json
+{
+  "min_project_tests": 5,
+  "require_package_tests": true,
+  "require_tests_for_mutants": true,
+  "require_readme": true,
+  "require_license": true,
+  "require_ci": true,
+  "min_mutation_score": 60,
+  "min_coverage": 70
+}
 ```
 
-## Example Output
+## CLI wrapper for `--deny-warn`
 
-`scan fixtures/well_tested` produces a compact report like:
+Since MoonBit `0.10.3+` toolchains remove `--deny-warn` from `fmt` and `info`, you can use the wrappers provided in `.github/bin/` to automatically translate these flags locally or in CI:
 
-```text
-MoonSeal Quality Report v1
-project: LL1266/well_tested
-version: 0.1.0
-source-files: 3
-test-files: 3
-mutation-candidates: 8
-package: internal sources=1 tests=1 public-api=1
-package: . sources=2 tests=2 public-api=2
-```
+- **Linux/macOS**: Prepend `.github/bin` to your `PATH` or invoke `.github/bin/moon`.
+- **Windows**: Invoke `.github/bin/moon.bat`.
 
-`gate fixtures/well_tested` reports `MoonSeal gate: PASS`, while
-`gate fixtures/untested` reports `MoonSeal gate: FAIL` together with the failed
-checks.
-
-## Public API
-
-- `analyze_project(path : String) -> Result[QualityReport, SealError]`
-- `evaluate_gate(report : QualityReport, policy : GatePolicy) -> GateResult`
-- `mutation_plan(report : QualityReport) -> Array[MutationCandidate]`
-- `render_report(report : QualityReport) -> String`
-- `render_gate(result : GateResult) -> String`
-- `render_mutants(candidates : Array[MutationCandidate]) -> String`
-- `summarize(report : QualityReport) -> String`
-- `format_error(err : SealError) -> String`
-
-## Project Limits
-
-- MoonSeal is a structural signal checker, not a replacement for `moon test`.
-- The default gate is intentionally simple and readable; it does not try to
-  infer semantic coverage.
-- Mutation candidates are descriptive only in `v0.1.x`; they are not executed
-  automatically.
-- Filesystem scanning currently assumes the JS backend.
-
-## Roadmap
-
-- Structured JSON output for CI consumers.
-- Configurable gate policies for larger projects.
-- Temporary-copy mutation execution with per-candidate test runs.
-- Side-by-side trend comparison between two reports.
+These wrappers automatically map `moon fmt --deny-warn` to `moon fmt --check`, and strip `--deny-warn` from `moon info --deny-warn`, ensuring compatibility and strict warning-to-error gating.
 
 ## Competition And Release Links
 

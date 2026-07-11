@@ -1,33 +1,51 @@
 name: MoonSeal CI
 
 on:
-  workflow_dispatch:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    name: Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up MoonBit
+        uses: hustcer/setup-moonbit@v1
+
+      - name: Configure wrapper path (Unix)
+        if: runner.os != 'Windows'
         run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/.github/bin" >> "$GITHUB_PATH"
+
+      - name: Configure wrapper path (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          echo "$env:GITHUB_WORKSPACE/.github/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Show toolchain
         run: moon version --all
 
-      - name: Check package interfaces
-        run: moon info
+      - name: Run moon check
+        run: moon check
 
-      - name: Check formatting
-        run: moon fmt --check
+      - name: Run moon fmt
+        run: moon fmt --deny-warn
 
-      - name: Run tests
-        run: moon test --target js
+      - name: Run moon info
+        run: moon info --deny-warn
+
+      - name: Run moon test
+        run: moon test
 
       - name: Run quality gate examples
         run: |
