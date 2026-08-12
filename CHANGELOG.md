@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.2 - 2026-08-12
+
+- added versioned quality snapshots and baseline comparison for tests,
+  mutation score, coverage, warnings, and package-level regressions
+- added actionable recommendations, health scoring, and a terminal dashboard
+- added SARIF 2.1.0 rendering for CI/code-scanning integrations
+- added `snapshot`, `compare`, `recommend`, and `sarif` CLI commands
+- added JSON round-trip and malformed-baseline boundary tests
+
 ## 2026-08-12
 
 - fixed README/LICENSE file-presence checks and enforced mutation/coverage

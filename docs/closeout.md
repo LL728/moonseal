@@ -17,6 +17,8 @@
   supplied by `--mutate` and `--coverage`.
 - Adds regression coverage for thresholds and missing repository materials.
 - Runs dynamic mutation and coverage checks in CI against the passing fixture.
+- Adds versioned baseline comparison, health dashboards, recommendations, and
+  SARIF output for downstream CI integrations.
 
 ## Verification commands
 
@@ -33,9 +35,13 @@ moon run --target js cmd/main -- gate fixtures/untested
 moon run --target js cmd/main -- mutants fixtures/mutation_targets
 moon run --target js cmd/main -- explain fixtures/well_tested
 moon run --target js cmd/main -- gate fixtures/well_tested --mutate --coverage
+moon run --target js cmd/main -- snapshot fixtures/well_tested --output _build/baseline.json
+moon run --target js cmd/main -- compare fixtures/well_tested --baseline _build/baseline.json
+moon run --target js cmd/main -- recommend fixtures/untested
+moon run --target js cmd/main -- sarif fixtures/untested --output _build/untested.sarif
 ```
 
-Expected results include 16 passing unit tests, `MoonSeal gate: PASS` for the
+Expected results include 25 passing unit tests, `MoonSeal gate: PASS` for the
 well-tested fixture, `MoonSeal gate: FAIL` for the intentionally untested
 fixture, stable `MS-` candidate IDs, and a dynamic report containing mutation
 and coverage values.

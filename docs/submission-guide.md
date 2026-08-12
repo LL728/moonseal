@@ -47,6 +47,18 @@ moon test --target js
 The repository workflow at `.github/workflows/ci.yml` repeats these checks on
 Ubuntu, macOS, and Windows and also runs the dynamic mutation/coverage gate.
 
+For a maintainable release baseline, run:
+
+```bash
+moon run --target js cmd/main -- snapshot . --output moonseal-baseline.json
+moon run --target js cmd/main -- compare . --baseline moonseal-baseline.json
+moon run --target js cmd/main -- recommend .
+```
+
+Commit the baseline only when the measured values were produced with the same
+toolchain and command flags. A missing or malformed baseline is reported as an
+explicit error; it is never silently replaced by the current scan.
+
 ## Acceptance Notes
 
 - Use GitLink as the competition repository link.

@@ -4,6 +4,10 @@ package "LL728/moonseal"
 // Values
 pub fn analyze_project(String) -> Result[QualityReport, SealError]
 
+pub fn compare_snapshot(QualitySnapshot, QualitySnapshot) -> SnapshotComparison
+
+pub fn dashboard(QualityReport) -> QualityDashboard
+
 pub fn default_policy() -> GatePolicy
 
 pub fn evaluate_gate(QualityReport, GatePolicy) -> GateResult
@@ -12,9 +16,17 @@ pub fn format_error(SealError) -> String
 
 pub fn has_failure(GateResult, String) -> Bool
 
+pub fn has_regression(SnapshotComparison, String) -> Bool
+
 pub fn has_warning(QualityReport, String) -> Bool
 
+pub fn health_label(Int) -> String
+
+pub fn health_score(QualityReport) -> Int
+
 pub fn load_policy(String) -> GatePolicy
+
+pub fn make_snapshot(QualityReport) -> QualitySnapshot
 
 pub fn mutation_plan(QualityReport) -> Array[MutationCandidate]
 
@@ -22,17 +34,35 @@ pub fn parse_moon_mod(String) -> ModuleMeta
 
 pub fn parse_pkg_imports(String, String) -> Array[ImportInfo]
 
+pub fn parse_snapshot(String) -> Result[QualitySnapshot, String]
+
+pub fn read_snapshot(String) -> Result[QualitySnapshot, String]
+
+pub fn recommendations(QualityReport) -> Array[QualityRecommendation]
+
+pub fn render_comparison(SnapshotComparison) -> String
+
+pub fn render_dashboard(QualityDashboard) -> String
+
 pub fn render_gate(GateResult) -> String
 
 pub fn render_mutants(Array[MutationCandidate]) -> String
 
+pub fn render_recommendations(Array[QualityRecommendation]) -> String
+
 pub fn render_report(QualityReport) -> String
+
+pub fn render_sarif(QualityReport, GateResult) -> String
 
 pub fn run_coverage_analysis(String) -> (Int, Array[FileCoverage])
 
 pub fn run_mutation_testing(String, Array[MutationCandidate]) -> (Int, Int, Int, Array[MutationCandidate])
 
 pub fn summarize(QualityReport) -> String
+
+pub fn write_snapshot(String, QualitySnapshot) -> Result[Unit, String]
+
+pub fn write_text(String, String) -> Result[Unit, String]
 
 // Errors
 
@@ -97,6 +127,40 @@ pub(all) struct PackageQuality {
 } derive(Eq)
 pub impl ToJson for PackageQuality
 
+pub(all) struct PackageSnapshot {
+  path : String
+  source_count : Int
+  test_count : Int
+  public_api_count : Int
+  warning_count : Int
+} derive(Eq)
+pub impl ToJson for PackageSnapshot
+
+pub(all) struct QualityDashboard {
+  project : String
+  version : String
+  score : Int
+  label : String
+  source_files : Int
+  test_files : Int
+  package_count : Int
+  mutation_candidates : Int
+  mutation_score : Int
+  coverage_percentage : Int
+  warning_count : Int
+  recommendation_count : Int
+  risks : Array[String]
+} derive(Eq)
+pub impl ToJson for QualityDashboard
+
+pub(all) struct QualityRecommendation {
+  id : String
+  priority : String
+  title : String
+  detail : String
+} derive(Eq)
+pub impl ToJson for QualityRecommendation
+
 pub(all) struct QualityReport {
   name : String
   version : String
@@ -118,11 +182,56 @@ pub(all) struct QualityReport {
 } derive(Eq)
 pub impl ToJson for QualityReport
 
+pub(all) struct QualitySnapshot {
+  schema_version : Int
+  name : String
+  version : String
+  source_files : Int
+  test_files : Int
+  package_count : Int
+  mutation_candidates : Int
+  mutants_tested : Int
+  mutation_score : Int
+  coverage_total_percentage : Int
+  warning_count : Int
+  packages : Array[PackageSnapshot]
+} derive(Eq)
+pub impl ToJson for QualitySnapshot
+
 pub(all) enum SealError {
   MissingProject(String)
   MissingManifest(String)
   FileReadFailed(String)
 } derive(Eq)
+
+pub(all) struct SnapshotComparison {
+  passed : Bool
+  baseline_version : String
+  current_version : String
+  deltas : Array[SnapshotDelta]
+  regressions : Array[SnapshotRegression]
+  improvements : Array[SnapshotDelta]
+  summary : String
+} derive(Eq)
+pub impl ToJson for SnapshotComparison
+
+pub(all) struct SnapshotDelta {
+  metric : String
+  baseline : Int
+  current : Int
+  delta : Int
+  direction : String
+} derive(Eq)
+pub impl ToJson for SnapshotDelta
+
+pub(all) struct SnapshotRegression {
+  metric : String
+  baseline : Int
+  current : Int
+  delta : Int
+  message : String
+} derive(Eq)
+pub impl ToJson for SnapshotRegression
 
 pub(all) struct SourceFile {
   path : String

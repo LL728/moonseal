@@ -74,6 +74,33 @@ moon run --target js cmd/main -- gate fixtures/well_tested --mutate --coverage
 survived mutants. `--coverage` runs MoonBit coverage and parses its summary.
 Both measurements are restored before the command exits.
 
+## Baselines, dashboards, and CI findings
+
+Create a small, reviewable quality baseline after a release-quality scan:
+
+```bash
+moon run --target js cmd/main -- snapshot . --output moonseal-baseline.json
+moon run --target js cmd/main -- compare . --baseline moonseal-baseline.json
+moon run --target js cmd/main -- recommend .
+```
+
+The baseline stores stable quality metrics and package summaries. A comparison
+fails when project tests, mutation score, coverage, or package test counts
+decrease, or when warnings increase. Source/API growth is reported as a
+change but is not incorrectly treated as a failure. Use `--mutate` and
+`--coverage` with `compare` when the baseline contains measured values.
+
+For a release dashboard or GitHub Code Scanning-compatible report, use the
+CLI or library APIs:
+
+```bash
+moon run --target js cmd/main -- sarif . --output moonseal.sarif
+```
+
+The library APIs `dashboard`, `health_score`, `render_dashboard`, and
+`render_sarif` are also available to integrations that already have a
+`QualityReport` and `GateResult`.
+
 ## Configurable policy
 
 Create `moonseal.json` in the project being checked:
@@ -112,6 +139,8 @@ disabled.
 - Mooncakes package: `LL728/moonseal`
 - Proposal source: `docs/competition/proposal.md`
 - Proposal PDF: `docs/competition/MoonSeal项目申报书.pdf`
+- Baseline format: `QualitySnapshot` schema version 1; commit the generated
+  `moonseal-baseline.json` when a project wants regression protection.
 - Acceptance checklist: `docs/acceptance-checklist.md`
 - Closeout notes: `docs/closeout.md`
 

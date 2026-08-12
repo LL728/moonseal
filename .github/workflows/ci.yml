@@ -58,3 +58,9 @@ jobs:
 
       - name: Run dynamic mutation and coverage gate
         run: moon run --target js cmd/main -- gate fixtures/well_tested --mutate --coverage
+
+      - name: Run baseline and integration fixture checks
+        run: |
+          moon run --target js cmd/main -- gate fixtures/realistic_project
+          moon run --target js cmd/main -- compare fixtures/realistic_project --baseline fixtures/realistic_project/moonseal-baseline.json
+          moon run --target js cmd/main -- sarif fixtures/untested --output _build/untested.sarif
