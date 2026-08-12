@@ -32,10 +32,29 @@ Editable source:
 docs/competition/MoonSeal项目申报书.docx
 ```
 
+## Reproducible environment
+
+Use MoonBit `0.10.3` or the exact CI build `0.10.3+16975d007`. Install from
+the official Unix or PowerShell installer, then verify with:
+
+```bash
+moon version --all
+moon check --target js
+moon fmt --check
+moon test --target js
+```
+
+The repository workflow at `.github/workflows/ci.yml` repeats these checks on
+Ubuntu, macOS, and Windows and also runs the dynamic mutation/coverage gate.
+
 ## Acceptance Notes
 
 - Use GitLink as the competition repository link.
 - Keep GitHub synchronized as the public mirror repository.
 - Keep the Mooncakes package name aligned with `moon.mod`:
   `LL728/moonseal`.
+- Keep `README.md`, root `LICENSE`, and `.github/workflows/ci.yml` present in
+  every synchronized mirror.
+- For a threshold-aware gate, add `moonseal.json` to the project being checked
+  and invoke `gate` with `--mutate` and/or `--coverage`.
 - Use `docs/closeout.md` as the single entry for the final verification record.

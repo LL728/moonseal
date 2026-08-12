@@ -1,39 +1,44 @@
 # MoonSeal Acceptance Checklist
 
-## Build And Verification
+## Toolchain and build
 
-- [ ] `moon info` passes.
+- [ ] `moon version --all` reports MoonBit `0.10.3`.
+- [ ] `moon check --target js` passes.
 - [ ] `moon fmt --check` passes.
-- [ ] `moon test --target js` passes.
-- [ ] `moon run --target js cmd/main -- scan fixtures/well_tested` prints a
-      quality report.
-- [ ] `moon run --target js cmd/main -- gate fixtures/well_tested` prints
-      `MoonSeal gate: PASS`.
-- [ ] `moon run --target js cmd/main -- gate fixtures/untested` prints
-      `MoonSeal gate: FAIL`.
-- [ ] `moon run --target js cmd/main -- mutants fixtures/mutation_targets`
-      prints stable candidate IDs.
-- [ ] `moon run --target js cmd/main -- explain fixtures/well_tested` prints
-      the compact project summary.
+- [ ] `moon info` passes and leaves no textual Git diff.
+- [ ] `moon test --target js` passes with 16 tests.
 
-## Repository Hygiene
+## Quality-gate behavior
 
-- [ ] `README.md` describes the tool as a MoonBit test adequacy and release
-      quality gate toolkit.
-- [ ] `CHANGELOG.md` records the closeout refresh.
-- [ ] The workflow file lives under `.github/workflows/` and is readable as a
-      normal CI entrypoint.
+- [ ] `scan fixtures/well_tested` prints a quality report.
+- [ ] `gate fixtures/well_tested` prints `MoonSeal gate: PASS`.
+- [ ] `gate fixtures/untested` prints `MoonSeal gate: FAIL`.
+- [ ] `mutants fixtures/mutation_targets` prints stable `MS-` candidate IDs.
+- [ ] `explain fixtures/well_tested` prints the compact project summary.
+- [ ] `gate fixtures/well_tested --mutate --coverage` prints measured mutation
+      and coverage values.
+- [ ] Policy tests reject mutation and coverage values below configured
+      thresholds.
+- [ ] Missing README and root LICENSE files are rejected even when the
+      `moon.mod` fields still declare them.
+
+## Repository hygiene
+
+- [ ] `README.md` includes installation, environment, usage, and expected
+      output steps.
+- [ ] `CHANGELOG.md` records the acceptance refresh.
+- [ ] The workflow file is under `.github/workflows/ci.yml`.
+- [ ] CI runs on Ubuntu, macOS, and Windows with MoonBit 0.10.3 pinned.
+- [ ] CI uses read-only contents permission and disables persisted checkout
+      credentials.
 - [ ] No stale repository URL or outdated mirror path remains in tracked docs.
-- [ ] GitLink remote: `https://gitlink.org.cn/LL1266/moonseal.git`.
+- [ ] GitLink remote: `https://www.gitlink.org.cn/LL1266/moonseal.git`.
 - [ ] GitHub remote: `https://github.com/LL728/moonseal.git`.
 
-## Public Submission Fields
+## Public submission fields
 
-- [ ] GitLink repository link: `https://gitlink.org.cn/LL1266/moonseal`
-- [ ] GitHub mirror link: `https://github.com/LL728/moonseal`
-- [ ] Project name:
-      `MoonSeal：MoonBit 测试充分性与发布质量门禁工具`
-- [ ] Proposal PDF path:
-      `docs/competition/MoonSeal项目申报书.pdf`
-- [ ] Mooncakes package:
-      `LL728/moonseal`
+- [ ] GitLink repository: `https://gitlink.org.cn/LL1266/moonseal`.
+- [ ] GitHub mirror: `https://github.com/LL728/moonseal`.
+- [ ] Project name: `MoonSeal：MoonBit 测试充分性与发布质量门禁工具`.
+- [ ] Proposal PDF: `docs/competition/MoonSeal项目申报书.pdf`.
+- [ ] Mooncakes package: `LL728/moonseal`.

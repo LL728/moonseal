@@ -1,45 +1,82 @@
 # MoonSeal
 
-MoonSeal is a MoonBit release-readiness checker and test adequacy gate tool for MoonBit repositories.
-It answers a critical question before a release, competition submission, or package publish: does this project show enough testing signals and quality gate metrics to be treated as ready for review?
+MoonSeal is a MoonBit release-readiness checker and test adequacy gate. It
+scans a MoonBit repository, reports package-level testing signals, executes
+optional mutation and coverage checks, and applies a configurable release
+policy before a package, competition submission, or public release.
 
-## Core Capabilities
+## Requirements and installation
 
-- **Project Scanning**: Parse `moon.mod` and `moon.pkg` to discover project structure and classify `.mbt` source, black-box, and white-box test files.
-- **Configurable Strategies**: Load and enforce release gate policies from a local `moonseal.json` configuration file.
-- **JSON Machine-Readable Output**: Support exporting reports in clean, structured JSON format for CI/CD pipeline automation and machine consumption.
-- **Mutation Testing Execution Engine**: Statically extract and dynamically run mutation testing by temporarily applying mutations (boolean flips, comparison boundary shifts, integer boundaries, logical operators) and executing the test suite to calculate a mutation adequacy score.
-- **Code Coverage Parser**: Integrate with MoonBit's native coverage tool to run tests with coverage enabled, parse the summary report, and assert minimum coverage requirements.
-- **CLI Wrappers for `--deny-warn`**: Provide local wrapper scripts for Linux/macOS and Windows to ensure smooth execution of `--deny-warn` commands in CI environments using newer MoonBit toolchains (0.10.3+).
+MoonSeal targets the MoonBit JavaScript/Node.js backend because it reads the
+project filesystem and launches `moon test`. The repository CI is pinned to
+MoonBit `0.10.3+16975d007`.
 
-## CLI Commands
-
-MoonSeal targets the MoonBit JavaScript/Node.js backend because it needs filesystem and child-process access during analysis.
+On Linux or macOS:
 
 ```bash
-# Run unit tests
-moon test --target js
-
-# Basic scan and release gate check
-moon run --target js cmd/main -- scan <project>
-moon run --target js cmd/main -- gate <project>
-
-# Run dynamic mutation testing and code coverage checks
-moon run --target js cmd/main -- scan <project> --mutate --coverage
-moon run --target js cmd/main -- gate <project> --mutate --coverage
-
-# Output machine-readable JSON reports
-moon run --target js cmd/main -- scan <project> --json --mutate --coverage
-moon run --target js cmd/main -- gate <project> --json --mutate --coverage
-
-# Utility subcommands
-moon run --target js cmd/main -- mutants <project> [--json]
-moon run --target js cmd/main -- explain <project> [--json]
+curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+export PATH="$HOME/.moon/bin:$PATH"
+moon version --all
 ```
 
-## Configurable Policy (`moonseal.json`)
+On Windows PowerShell:
 
-To customize your project's release quality gate, create a `moonseal.json` in the root of your project:
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+$env:Path = "$env:USERPROFILE\.moon\bin;$env:Path"
+moon version --all
+```
+
+The version output should contain MoonBit `0.10.3` (the exact CI build is
+`0.10.3+16975d007`). Then clone either public repository:
+
+```bash
+git clone https://github.com/LL728/moonseal.git
+cd moonseal
+```
+
+GitLink competition repository: `https://gitlink.org.cn/LL1266/moonseal`.
+
+## Local verification
+
+Run the fast checks first:
+
+```bash
+moon check --target js
+moon fmt --check
+moon info
+git diff --exit-code
+moon test --target js
+```
+
+Run the structural examples:
+
+```bash
+moon run --target js cmd/main -- scan fixtures/well_tested
+moon run --target js cmd/main -- gate fixtures/well_tested
+moon run --target js cmd/main -- gate fixtures/untested
+moon run --target js cmd/main -- mutants fixtures/mutation_targets
+moon run --target js cmd/main -- explain fixtures/well_tested
+```
+
+The well-tested fixture must print `MoonSeal gate: PASS`; the intentionally
+untested fixture must print `MoonSeal gate: FAIL`.
+
+Run dynamic mutation and coverage checks when a measured gate is required:
+
+```bash
+moon run --target js cmd/main -- scan fixtures/well_tested --mutate --coverage
+moon run --target js cmd/main -- gate fixtures/well_tested --mutate --coverage
+```
+
+`--mutate` runs the test suite once for each candidate and reports killed and
+survived mutants. `--coverage` runs MoonBit coverage and parses its summary.
+Both measurements are restored before the command exits.
+
+## Configurable policy
+
+Create `moonseal.json` in the project being checked:
 
 ```json
 {
@@ -54,18 +91,23 @@ To customize your project's release quality gate, create a `moonseal.json` in th
 }
 ```
 
-## CLI wrapper for `--deny-warn`
+The gate checks the README path declared by `moon.mod`, the root `LICENSE`
+file, and a `.github/workflows/*.yml` or `.yaml` workflow. Mutation and
+coverage thresholds are enforced against measured values; invoke `gate` with
+`--mutate` and/or `--coverage` when those thresholds are non-zero.
 
-Since MoonBit `0.10.3+` toolchains remove `--deny-warn` from `fmt` and `info`, you can use the wrappers provided in `.github/bin/` to automatically translate these flags locally or in CI:
+## Continuous integration
 
-- **Linux/macOS**: Prepend `.github/bin` to your `PATH` or invoke `.github/bin/moon`.
-- **Windows**: Invoke `.github/bin/moon.bat`.
+`.github/workflows/ci.yml` follows the MoonBit community workflow shape. It
+runs on Ubuntu, macOS, and Windows, installs the pinned MoonBit 0.10.3
+toolchain, checks formatting and generated interfaces, runs tests, and
+executes both structural and dynamic quality-gate examples. The workflow has
+read-only contents permission and checks out code with persisted credentials
+disabled.
 
-These wrappers automatically map `moon fmt --deny-warn` to `moon fmt --check`, and strip `--deny-warn` from `moon info --deny-warn`, ensuring compatibility and strict warning-to-error gating.
+## Repository identity
 
-## Competition And Release Links
-
-- GitLink repository: `https://gitlink.org.cn/LL1266/moonseal`
+- GitLink: `https://gitlink.org.cn/LL1266/moonseal`
 - GitHub mirror: `https://github.com/LL728/moonseal`
 - Mooncakes package: `LL728/moonseal`
 - Proposal source: `docs/competition/proposal.md`
@@ -75,4 +117,4 @@ These wrappers automatically map `moon fmt --deny-warn` to `moon fmt --check`, a
 
 ## License
 
-Apache-2.0
+Apache-2.0. See [LICENSE](LICENSE).

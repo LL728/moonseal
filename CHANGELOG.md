@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-12
+
+- fixed README/LICENSE file-presence checks and enforced mutation/coverage
+  policy thresholds
+- added regression tests for threshold failures and missing submission files
+- reformatted MoonBit sources with 0.10.3 and replaced removed `--deny-warn`
+  CI calls with `moon fmt --check`/`moon info`
+- pinned three-platform CI to MoonBit `0.10.3+16975d007`
+- added dynamic mutation and coverage verification to CI
+- expanded README and acceptance documents with installation and reproducible
+  verification steps
+
 ## 2026-07-06
 
 - refreshed the public project narrative for competition closeout and dual

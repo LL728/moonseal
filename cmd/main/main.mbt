@@ -9,18 +9,31 @@ fn main {
   let command = args[command_index]
   let path = find_path(args, command_index)
   let (json_flag, mutate_flag, coverage_flag) = parse_flags(args)
-  
+
   if command == "scan" {
     match @lib.analyze_project(path) {
       Ok(report) => {
         let mut rep = report
         if mutate_flag {
-          let (tested, killed, score, survived) = @lib.run_mutation_testing(path, rep.mutation_candidates)
-          rep = { ..rep, mutants_tested: tested, mutants_killed: killed, mutation_score: score, survived_mutants: survived }
+          let (tested, killed, score, survived) = @lib.run_mutation_testing(
+            path,
+            rep.mutation_candidates,
+          )
+          rep = {
+            ..rep,
+            mutants_tested: tested,
+            mutants_killed: killed,
+            mutation_score: score,
+            survived_mutants: survived,
+          }
         }
         if coverage_flag {
           let (total_cov, files_cov) = @lib.run_coverage_analysis(path)
-          rep = { ..rep, coverage_total_percentage: total_cov, coverage_files: files_cov }
+          rep = {
+            ..rep,
+            coverage_total_percentage: total_cov,
+            coverage_files: files_cov,
+          }
         }
         if json_flag {
           println(rep.to_json().stringify(indent=2))
@@ -35,12 +48,25 @@ fn main {
       Ok(report) => {
         let mut rep = report
         if mutate_flag {
-          let (tested, killed, score, survived) = @lib.run_mutation_testing(path, rep.mutation_candidates)
-          rep = { ..rep, mutants_tested: tested, mutants_killed: killed, mutation_score: score, survived_mutants: survived }
+          let (tested, killed, score, survived) = @lib.run_mutation_testing(
+            path,
+            rep.mutation_candidates,
+          )
+          rep = {
+            ..rep,
+            mutants_tested: tested,
+            mutants_killed: killed,
+            mutation_score: score,
+            survived_mutants: survived,
+          }
         }
         if coverage_flag {
           let (total_cov, files_cov) = @lib.run_coverage_analysis(path)
-          rep = { ..rep, coverage_total_percentage: total_cov, coverage_files: files_cov }
+          rep = {
+            ..rep,
+            coverage_total_percentage: total_cov,
+            coverage_files: files_cov,
+          }
         }
         let policy = @lib.load_policy(path)
         let gate_res = @lib.evaluate_gate(rep, policy)
@@ -54,7 +80,7 @@ fn main {
     }
   } else if command == "mutants" {
     match @lib.analyze_project(path) {
-      Ok(report) => {
+      Ok(report) =>
         if json_flag {
           let arr = Array::new()
           for mc in @lib.mutation_plan(report) {
@@ -64,18 +90,16 @@ fn main {
         } else {
           println(@lib.render_mutants(@lib.mutation_plan(report)))
         }
-      }
       Err(err) => println(@lib.format_error(err))
     }
   } else if command == "explain" {
     match @lib.analyze_project(path) {
-      Ok(report) => {
+      Ok(report) =>
         if json_flag {
           println(Json::string(@lib.summarize(report)).stringify(indent=2))
         } else {
           println(@lib.summarize(report))
         }
-      }
       Err(err) => println(@lib.format_error(err))
     }
   } else {
@@ -129,8 +153,12 @@ fn find_path(args : Array[String], cmd_idx : Int) -> String {
 fn print_help() -> Unit {
   println("MoonSeal")
   println("usage:")
-  println("  moon run --target js cmd/main -- scan <project> [--json] [--mutate] [--coverage]")
-  println("  moon run --target js cmd/main -- gate <project> [--json] [--mutate] [--coverage]")
+  println(
+    "  moon run --target js cmd/main -- scan <project> [--json] [--mutate] [--coverage]",
+  )
+  println(
+    "  moon run --target js cmd/main -- gate <project> [--json] [--mutate] [--coverage]",
+  )
   println("  moon run --target js cmd/main -- mutants <project> [--json]")
   println("  moon run --target js cmd/main -- explain <project> [--json]")
 }

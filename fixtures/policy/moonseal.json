@@ -1,0 +1,10 @@
+{
+  "min_project_tests": 3,
+  "require_package_tests": true,
+  "require_tests_for_mutants": true,
+  "require_readme": true,
+  "require_license": true,
+  "require_ci": true,
+  "min_mutation_score": 60,
+  "min_coverage": 70
+}

@@ -135,3 +135,78 @@ test "load policy default behavior" {
   assert_eq(policy.min_mutation_score, default_p.min_mutation_score)
   assert_eq(policy.min_coverage, default_p.min_coverage)
 }
+
+///|
+test "gate enforces mutation and coverage thresholds" {
+  let report = report_ok("fixtures/well_tested")
+  let measured = {
+    ..report,
+    mutants_tested: 8,
+    mutation_score: 50,
+    coverage_total_percentage: 80,
+  }
+  let policy = {
+    ..@moonseal.default_policy(),
+    min_mutation_score: 60,
+    min_coverage: 90,
+  }
+  let gate = @moonseal.evaluate_gate(measured, policy)
+  assert_false(gate.passed)
+  assert_true(
+    @moonseal.has_failure(gate, "mutation score 50% is below minimum 60%"),
+  )
+  assert_true(@moonseal.has_failure(gate, "coverage 80% is below minimum 90%"))
+}
+
+///|
+test "gate checks README and LICENSE file presence" {
+  let report = report_ok("fixtures/missing_docs")
+  assert_eq(report.readme, "")
+  assert_eq(report.license, "")
+  let policy = {
+    ..@moonseal.default_policy(),
+    min_project_tests: 0,
+    require_package_tests: false,
+    require_tests_for_mutants: false,
+    require_ci: false,
+  }
+  let gate = @moonseal.evaluate_gate(report, policy)
+  assert_false(gate.passed)
+  assert_true(@moonseal.has_failure(gate, "README.md is missing"))
+  assert_true(@moonseal.has_failure(gate, "LICENSE file is missing"))
+}
+
+///|
+test "loads custom mutation and coverage policy" {
+  let policy = @moonseal.load_policy("fixtures/policy")
+  assert_eq(policy.min_project_tests, 3)
+  assert_true(policy.require_readme)
+  assert_true(policy.require_license)
+  assert_eq(policy.min_mutation_score, 60)
+  assert_eq(policy.min_coverage, 70)
+}
+
+///|
+test "runs dynamic mutation and coverage analysis" {
+  let report = report_ok("fixtures/well_tested")
+  let (tested, killed, score, survived) = @moonseal.run_mutation_testing(
+    "fixtures/well_tested",
+    report.mutation_candidates,
+  )
+  assert_eq(tested, 8)
+  assert_true(killed > 0)
+  assert_true(score > 0)
+  assert_true(survived.length() < tested)
+  let (coverage, files) = @moonseal.run_coverage_analysis(
+    "fixtures/well_tested",
+  )
+  assert_true(coverage > 0)
+  assert_true(files.length() > 0)
+}
+
+///|
+test "coverage analysis handles missing coverage data" {
+  let (coverage, files) = @moonseal.run_coverage_analysis("fixtures/policy")
+  assert_eq(coverage, 0)
+  assert_eq(files.length(), 0)
+}

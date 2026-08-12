@@ -1,0 +1,5 @@
+name = "LL1266/policy"
+version = "0.1.0"
+readme = "README.md"
+repository = "https://gitlink.org.cn/LL1266/policy"
+license = "Apache-2.0"
