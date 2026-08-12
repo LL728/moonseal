@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3 - 2026-08-12
+
+- republished the complete acceptance-verified baseline, dashboard, and CI
+  integration release with a new Mooncakes patch version
+
 ## 0.1.2 - 2026-08-12
 
 - added versioned quality snapshots and baseline comparison for tests,
