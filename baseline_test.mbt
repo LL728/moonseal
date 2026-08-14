@@ -168,3 +168,119 @@ test "realistic baseline file is readable and neutral" {
   )
   assert_true(result.passed)
 }
+
+///|
+test "API coverage associates public symbols with package tests" {
+  let report = match @moonseal.analyze_project("fixtures/well_tested") {
+    Ok(value) => value
+    Err(err) => abort(@moonseal.format_error(err))
+  }
+  let coverage = @moonseal.analyze_api_coverage("fixtures/well_tested", report)
+  assert_eq(coverage.entries.length(), 3)
+  assert_eq(coverage.summary.total, 3)
+  assert_eq(coverage.summary.covered, 3)
+  assert_eq(coverage.summary.percentage, 100)
+  assert_true(coverage.entries[0].tested)
+  assert_true(@moonseal.render_api_coverage(coverage).contains("enabled"))
+  assert_true(coverage.to_json().stringify().contains("test_files"))
+}
+
+///|
+test "API coverage keeps uncovered public symbols visible" {
+  let report = match @moonseal.analyze_project("fixtures/mutation_targets") {
+    Ok(value) => value
+    Err(err) => abort(@moonseal.format_error(err))
+  }
+  let coverage = @moonseal.analyze_api_coverage(
+    "fixtures/mutation_targets", report,
+  )
+  assert_true(coverage.summary.total > 0)
+  assert_true(coverage.summary.covered < coverage.summary.total)
+  assert_true(@moonseal.render_api_coverage(coverage).contains("uncovered"))
+}
+
+///|
+test "quality history reports directional changes" {
+  let first = snapshot_ok()
+  let second = {
+    ..first,
+    version: "0.1.3",
+    test_files: 5,
+    coverage_total_percentage: 90,
+    warning_count: 1,
+  }
+  let history = @moonseal.make_history([first])
+  let appended = @moonseal.append_history(history, second)
+  assert_eq(appended.snapshots.length(), 2)
+  let trend = @moonseal.summarize_history(appended)
+  assert_eq(trend.sample_count, 2)
+  assert_eq(trend.test_file_delta, 2)
+  assert_eq(trend.coverage_delta, 90)
+  assert_eq(trend.warning_delta, 1)
+  assert_eq(trend.direction, "mixed")
+  assert_true(@moonseal.render_history(trend).contains("test-files"))
+}
+
+///|
+test "quality history JSON round trip and malformed input" {
+  let history = @moonseal.make_history([snapshot_ok()])
+  let encoded = history.to_json().stringify()
+  let decoded = match @moonseal.parse_history(encoded) {
+    Ok(value) => value
+    Err(message) => abort(message)
+  }
+  assert_eq(decoded.snapshots.length(), 1)
+  let malformed = @moonseal.parse_history(
+    (
+      #|{"schema_version":1,"snapshots":"bad"}
+    ),
+  )
+  match malformed {
+    Ok(_) => assert_true(false)
+    Err(message) => assert_true(message.contains("snapshots"))
+  }
+}
+
+///|
+test "coverage adapters normalize LCOV records" {
+  let input = "SF:src/lib.mbt\nDA:1,1\nDA:2,0\nDA:3,2\nend_of_record\n"
+  let document = match @moonseal.parse_external_coverage(input, "lcov") {
+    Ok(value) => value
+    Err(message) => abort(message)
+  }
+  assert_eq(document.total, 3)
+  assert_eq(document.covered, 2)
+  assert_eq(document.percentage, 66)
+  assert_eq(document.files.length(), 1)
+  assert_eq(document.files[0].path, "src/lib.mbt")
+  assert_eq(document.files[0].covered, 2)
+}
+
+///|
+test "coverage adapters normalize Cobertura line hits" {
+  let input = "<class filename=\"src/lib.mbt\">\n<lines>\n<line number=\"1\" hits=\"1\"/>\n<line number=\"2\" hits=\"0\"/>\n</lines>\n</class>"
+  let document = match @moonseal.parse_external_coverage(input, "cobertura") {
+    Ok(value) => value
+    Err(message) => abort(message)
+  }
+  assert_eq(document.total, 2)
+  assert_eq(document.covered, 1)
+  assert_eq(document.percentage, 50)
+  assert_true(
+    @moonseal.render_external_coverage(document).contains("cobertura"),
+  )
+}
+
+///|
+test "coverage adapters reject unsupported formats and malformed records" {
+  let unsupported = @moonseal.parse_external_coverage("", "llvm")
+  match unsupported {
+    Ok(_) => assert_true(false)
+    Err(message) => assert_true(message.contains("format"))
+  }
+  let malformed = @moonseal.parse_external_coverage("DA:bad", "lcov")
+  match malformed {
+    Ok(_) => assert_true(false)
+    Err(message) => assert_true(message.contains("DA"))
+  }
+}

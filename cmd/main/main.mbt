@@ -8,9 +8,14 @@ fn main {
   }
   let command = args[command_index]
   let path = find_path(args, command_index)
-  let (json_flag, mutate_flag, coverage_flag, baseline_path, output_path) = parse_flags(
-    args,
-  )
+  let (
+    json_flag,
+    mutate_flag,
+    coverage_flag,
+    baseline_path,
+    output_path,
+    history_path,
+  ) = parse_flags(args)
 
   if command == "scan" {
     match @lib.analyze_project(path) {
@@ -222,6 +227,51 @@ fn main {
       }
       Err(err) => println(@lib.format_error(err))
     }
+  } else if command == "api" {
+    match @lib.analyze_project(path) {
+      Ok(report) => {
+        let coverage = @lib.analyze_api_coverage(path, report)
+        if json_flag {
+          println(coverage.to_json().stringify(indent=2))
+        } else {
+          println(@lib.render_api_coverage(coverage))
+        }
+      }
+      Err(err) => println(@lib.format_error(err))
+    }
+  } else if command == "trend" {
+    if history_path.length() == 0 {
+      println("MoonSeal history error: use --history <file>")
+      return
+    }
+    match @lib.analyze_project(path) {
+      Ok(report) => {
+        let current = @lib.make_snapshot(report)
+        let history = match @lib.read_history(history_path) {
+          Ok(value) => value
+          Err(message) =>
+            if message.contains("not found") {
+              @lib.make_history([])
+            } else {
+              println("MoonSeal history error: " + message)
+              return
+            }
+        }
+        let updated = @lib.append_history(history, current)
+        match @lib.write_history(history_path, updated) {
+          Ok(_) => {
+            let summary = @lib.summarize_history(updated)
+            if json_flag {
+              println(summary.to_json().stringify(indent=2))
+            } else {
+              println(@lib.render_history(summary))
+            }
+          }
+          Err(message) => println("MoonSeal history error: " + message)
+        }
+      }
+      Err(err) => println(@lib.format_error(err))
+    }
   } else {
     print_help()
   }
@@ -237,7 +287,9 @@ fn find_command(args : Array[String]) -> Int {
       args[i] == "snapshot" ||
       args[i] == "compare" ||
       args[i] == "recommend" ||
-      args[i] == "sarif" {
+      args[i] == "sarif" ||
+      args[i] == "api" ||
+      args[i] == "trend" {
       return i
     }
   }
@@ -245,12 +297,15 @@ fn find_command(args : Array[String]) -> Int {
 }
 
 ///|
-fn parse_flags(args : Array[String]) -> (Bool, Bool, Bool, String, String) {
+fn parse_flags(
+  args : Array[String],
+) -> (Bool, Bool, Bool, String, String, String) {
   let mut json = false
   let mut mutate = false
   let mut coverage = false
   let mut baseline = ""
   let mut output = ""
+  let mut history = ""
   let mut index = 0
   while index < args.length() {
     let arg = args[index]
@@ -267,10 +322,13 @@ fn parse_flags(args : Array[String]) -> (Bool, Bool, Bool, String, String) {
     } else if (arg == "--output" || arg == "-o") && index + 1 < args.length() {
       index += 1
       output = args[index]
+    } else if arg == "--history" && index + 1 < args.length() {
+      index += 1
+      history = args[index]
     }
     index += 1
   }
-  (json, mutate, coverage, baseline, output)
+  (json, mutate, coverage, baseline, output, history)
 }
 
 ///|
@@ -306,5 +364,9 @@ fn print_help() -> Unit {
   println("  moon run --target js cmd/main -- recommend <project> [--json]")
   println(
     "  moon run --target js cmd/main -- sarif <project> [--output <file>] [--mutate] [--coverage]",
+  )
+  println("  moon run --target js cmd/main -- api <project> [--json]")
+  println(
+    "  moon run --target js cmd/main -- trend <project> --history <file> [--json]",
   )
 }

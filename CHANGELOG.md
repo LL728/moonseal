@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4 - 2026-08-14
+
+- added public API coverage association for package test files
+- added append-only quality history archives and directional trend reports
+- added LCOV and Cobertura coverage adapters for ecosystem integrations
+- added explicit `moon build --target js` verification and CI smoke checks
+
 ## 0.1.3 - 2026-08-12
 
 - republished the complete acceptance-verified baseline, dashboard, and CI

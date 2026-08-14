@@ -39,6 +39,9 @@ jobs:
       - name: Run moon check
         run: moon check --target js
 
+      - name: Run moon build
+        run: moon build --target js
+
       - name: Run formatting and interface checks
         run: |
           moon fmt --check
@@ -55,6 +58,7 @@ jobs:
           moon run --target js cmd/main -- gate fixtures/untested
           moon run --target js cmd/main -- mutants fixtures/mutation_targets
           moon run --target js cmd/main -- explain fixtures/well_tested
+          moon run --target js cmd/main -- api fixtures/well_tested
 
       - name: Run dynamic mutation and coverage gate
         run: moon run --target js cmd/main -- gate fixtures/well_tested --mutate --coverage
@@ -64,3 +68,4 @@ jobs:
           moon run --target js cmd/main -- gate fixtures/realistic_project
           moon run --target js cmd/main -- compare fixtures/realistic_project --baseline fixtures/realistic_project/moonseal-baseline.json
           moon run --target js cmd/main -- sarif fixtures/untested --output _build/untested.sarif
+          moon run --target js cmd/main -- trend fixtures/realistic_project --history _build/quality-history.json

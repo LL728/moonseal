@@ -4,9 +4,10 @@
 
 - [ ] `moon version --all` reports MoonBit `0.10.3`.
 - [ ] `moon check --target js` passes.
+- [ ] `moon build --target js` passes.
 - [ ] `moon fmt --check` passes.
 - [ ] `moon info` passes and leaves no textual Git diff.
-- [ ] `moon test --target js` passes with 25 tests.
+- [ ] `moon test --target js` passes with 34 tests.
 
 ## Quality-gate behavior
 
@@ -26,6 +27,9 @@
 - [ ] `recommend` and dashboard output provide actionable remediation hints.
 - [ ] SARIF output contains a valid 2.1.0 run with gate findings.
 - [ ] `sarif` writes a machine-readable artifact for CI/code-scanning tools.
+- [ ] `api fixtures/well_tested` reports public symbols associated with tests.
+- [ ] `trend fixtures/realistic_project --history <file>` appends a snapshot.
+- [ ] LCOV and Cobertura line records normalize to the common coverage model.
 
 ## Repository hygiene
 
@@ -47,4 +51,4 @@
 - [ ] Project name: `MoonSeal：MoonBit 测试充分性与发布质量门禁工具`.
 - [ ] Proposal PDF: `docs/competition/MoonSeal项目申报书.pdf`.
 - [ ] Mooncakes package: `LL728/moonseal`.
-- [ ] Current module version: `0.1.3`.
+- [ ] Current module version: `0.1.4`.

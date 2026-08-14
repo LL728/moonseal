@@ -44,6 +44,7 @@ Run the fast checks first:
 
 ```bash
 moon check --target js
+moon build --target js
 moon fmt --check
 moon info
 git diff --exit-code
@@ -58,6 +59,7 @@ moon run --target js cmd/main -- gate fixtures/well_tested
 moon run --target js cmd/main -- gate fixtures/untested
 moon run --target js cmd/main -- mutants fixtures/mutation_targets
 moon run --target js cmd/main -- explain fixtures/well_tested
+moon run --target js cmd/main -- api fixtures/well_tested
 ```
 
 The well-tested fixture must print `MoonSeal gate: PASS`; the intentionally
@@ -101,6 +103,19 @@ The library APIs `dashboard`, `health_score`, `render_dashboard`, and
 `render_sarif` are also available to integrations that already have a
 `QualityReport` and `GateResult`.
 
+Public API coverage and historical quality evidence are first-class commands:
+
+```bash
+moon run --target js cmd/main -- api .
+moon run --target js cmd/main -- trend . --history _build/quality-history.json
+```
+
+`api` associates public declarations with package test files and makes
+untested symbols visible. `trend` appends a versioned `QualitySnapshot` to a
+JSON archive and reports changes in tests, mutation score, coverage, and
+warnings. Integrations can normalize external LCOV and Cobertura reports with
+`parse_external_coverage`.
+
 ## Configurable policy
 
 Create `moonseal.json` in the project being checked:
@@ -127,7 +142,7 @@ coverage thresholds are enforced against measured values; invoke `gate` with
 
 `.github/workflows/ci.yml` follows the MoonBit community workflow shape. It
 runs on Ubuntu, macOS, and Windows, installs the pinned MoonBit 0.10.3
-toolchain, checks formatting and generated interfaces, runs tests, and
+toolchain, checks, builds, checks formatting and generated interfaces, runs tests, and
 executes both structural and dynamic quality-gate examples. The workflow has
 read-only contents permission and checks out code with persisted credentials
 disabled.
