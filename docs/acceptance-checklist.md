@@ -52,4 +52,4 @@
 - [ ] Project name: `MoonSeal：MoonBit 测试充分性与发布质量门禁工具`.
 - [ ] Proposal PDF: `docs/competition/MoonSeal项目申报书.pdf`.
 - [ ] Mooncakes package: `LL728/moonseal`.
-- [ ] Current module version: `0.1.5`.
+- [ ] Current module version: `0.1.6`.

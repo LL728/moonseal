@@ -3,4 +3,6 @@ import {
   "LL728/moonseal" @lib,
 }
 
-pkgtype(kind: "executable")
+options(
+  "is-main": true,
+)

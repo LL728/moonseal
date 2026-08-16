@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6 - 2026-08-16
+
+- restored the MoonBit 0.10.3-compatible executable package declaration after
+  newer local tooling rewrote it to an unsupported `pkgtype` key
+
 ## 0.1.5 - 2026-08-16
 
 - added public API coverage association for package test files
