@@ -60,6 +60,7 @@ moon run --target js cmd/main -- gate fixtures/untested
 moon run --target js cmd/main -- mutants fixtures/mutation_targets
 moon run --target js cmd/main -- explain fixtures/well_tested
 moon run --target js cmd/main -- api fixtures/well_tested
+moon run --target js cmd/main -- manifest fixtures/well_tested
 ```
 
 The well-tested fixture must print `MoonSeal gate: PASS`; the intentionally
@@ -108,6 +109,7 @@ Public API coverage and historical quality evidence are first-class commands:
 ```bash
 moon run --target js cmd/main -- api .
 moon run --target js cmd/main -- trend . --history _build/quality-history.json
+moon run --target js cmd/main -- manifest . --output _build/release-manifest.json
 ```
 
 `api` associates public declarations with package test files and makes
@@ -115,6 +117,10 @@ untested symbols visible. `trend` appends a versioned `QualitySnapshot` to a
 JSON archive and reports changes in tests, mutation score, coverage, and
 warnings. Integrations can normalize external LCOV and Cobertura reports with
 `parse_external_coverage`.
+
+`manifest` creates a release-evidence artifact containing documentation,
+license, CI, test, API-coverage, and gate results. It can be stored as JSON or
+rendered as a reviewer-friendly text report.
 
 ## Configurable policy
 

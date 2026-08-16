@@ -7,7 +7,7 @@
 - [ ] `moon build --target js` passes.
 - [ ] `moon fmt --check` passes.
 - [ ] `moon info` passes and leaves no textual Git diff.
-- [ ] `moon test --target js` passes with 34 tests.
+- [ ] `moon test --target js` passes with 39 tests.
 
 ## Quality-gate behavior
 
@@ -28,6 +28,7 @@
 - [ ] SARIF output contains a valid 2.1.0 run with gate findings.
 - [ ] `sarif` writes a machine-readable artifact for CI/code-scanning tools.
 - [ ] `api fixtures/well_tested` reports public symbols associated with tests.
+- [ ] `manifest fixtures/well_tested` reports a READY release manifest.
 - [ ] `trend fixtures/realistic_project --history <file>` appends a snapshot.
 - [ ] LCOV and Cobertura line records normalize to the common coverage model.
 
@@ -51,4 +52,4 @@
 - [ ] Project name: `MoonSeal：MoonBit 测试充分性与发布质量门禁工具`.
 - [ ] Proposal PDF: `docs/competition/MoonSeal项目申报书.pdf`.
 - [ ] Mooncakes package: `LL728/moonseal`.
-- [ ] Current module version: `0.1.4`.
+- [ ] Current module version: `0.1.5`.

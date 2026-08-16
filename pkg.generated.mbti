@@ -32,7 +32,27 @@ pub fn load_policy(String) -> GatePolicy
 
 pub fn make_history(Array[QualitySnapshot]) -> QualityHistory
 
+pub fn make_release_manifest(QualityReport, GateResult, ApiCoverage) -> ReleaseManifest
+
 pub fn make_snapshot(QualityReport) -> QualitySnapshot
+
+pub fn manifest_check(ReleaseManifest, String) -> ReleaseCheck
+
+pub fn manifest_check_ids(ReleaseManifest) -> Array[String]
+
+pub fn manifest_failed_ids(ReleaseManifest) -> Array[String]
+
+pub fn manifest_failure_summary(ReleaseManifest) -> String
+
+pub fn manifest_has_check(ReleaseManifest, String) -> Bool
+
+pub fn manifest_is_complete(ReleaseManifest) -> Bool
+
+pub fn manifest_is_ready(ReleaseManifest) -> Bool
+
+pub fn manifest_pass_rate(ReleaseManifest) -> Int
+
+pub fn manifest_status(ReleaseManifest) -> String
 
 pub fn mutation_plan(QualityReport) -> Array[MutationCandidate]
 
@@ -44,9 +64,13 @@ pub fn parse_moon_mod(String) -> ModuleMeta
 
 pub fn parse_pkg_imports(String, String) -> Array[ImportInfo]
 
+pub fn parse_release_manifest(String) -> Result[ReleaseManifest, String]
+
 pub fn parse_snapshot(String) -> Result[QualitySnapshot, String]
 
 pub fn read_history(String) -> Result[QualityHistory, String]
+
+pub fn read_release_manifest(String) -> Result[ReleaseManifest, String]
 
 pub fn read_snapshot(String) -> Result[QualitySnapshot, String]
 
@@ -68,6 +92,10 @@ pub fn render_mutants(Array[MutationCandidate]) -> String
 
 pub fn render_recommendations(Array[QualityRecommendation]) -> String
 
+pub fn render_release_manifest(ReleaseManifest) -> String
+
+pub fn render_release_manifest_markdown(ReleaseManifest) -> String
+
 pub fn render_report(QualityReport) -> String
 
 pub fn render_sarif(QualityReport, GateResult) -> String
@@ -81,6 +109,8 @@ pub fn summarize(QualityReport) -> String
 pub fn summarize_history(QualityHistory) -> TrendReport
 
 pub fn write_history(String, QualityHistory) -> Result[Unit, String]
+
+pub fn write_release_manifest(String, ReleaseManifest) -> Result[Unit, String]
 
 pub fn write_snapshot(String, QualitySnapshot) -> Result[Unit, String]
 
@@ -265,6 +295,27 @@ pub(all) struct QualitySnapshot {
 } derive(Eq)
 pub impl ToJson for QualitySnapshot
 
+pub(all) struct ReleaseCheck {
+  id : String
+  status : String
+  detail : String
+} derive(Eq)
+pub impl ToJson for ReleaseCheck
+
+pub(all) struct ReleaseManifest {
+  schema_version : Int
+  project : String
+  version : String
+  repository : String
+  source_files : Int
+  test_files : Int
+  api_coverage : Int
+  gate_passed : Bool
+  failed_checks : Int
+  checks : Array[ReleaseCheck]
+} derive(Eq)
+pub impl ToJson for ReleaseManifest
+
 pub(all) enum SealError {
   MissingProject(String)
   MissingManifest(String)
@@ -332,4 +383,3 @@ pub impl ToJson for TrendReport
 // Type aliases
 
 // Traits
-

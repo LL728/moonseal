@@ -272,6 +272,26 @@ fn main {
       }
       Err(err) => println(@lib.format_error(err))
     }
+  } else if command == "manifest" {
+    match @lib.analyze_project(path) {
+      Ok(report) => {
+        let gate = @lib.evaluate_gate(report, @lib.load_policy(path))
+        let api = @lib.analyze_api_coverage(path, report)
+        let manifest = @lib.make_release_manifest(report, gate, api)
+        if output_path.length() > 0 {
+          match @lib.write_release_manifest(output_path, manifest) {
+            Ok(_) =>
+              println("MoonSeal release manifest written: " + output_path)
+            Err(message) => println("MoonSeal manifest error: " + message)
+          }
+        } else if json_flag {
+          println(manifest.to_json().stringify(indent=2))
+        } else {
+          println(@lib.render_release_manifest(manifest))
+        }
+      }
+      Err(err) => println(@lib.format_error(err))
+    }
   } else {
     print_help()
   }
@@ -289,7 +309,8 @@ fn find_command(args : Array[String]) -> Int {
       args[i] == "recommend" ||
       args[i] == "sarif" ||
       args[i] == "api" ||
-      args[i] == "trend" {
+      args[i] == "trend" ||
+      args[i] == "manifest" {
       return i
     }
   }
@@ -368,5 +389,8 @@ fn print_help() -> Unit {
   println("  moon run --target js cmd/main -- api <project> [--json]")
   println(
     "  moon run --target js cmd/main -- trend <project> --history <file> [--json]",
+  )
+  println(
+    "  moon run --target js cmd/main -- manifest <project> [--output <file>] [--json]",
   )
 }

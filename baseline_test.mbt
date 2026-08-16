@@ -284,3 +284,90 @@ test "coverage adapters reject unsupported formats and malformed records" {
     Err(message) => assert_true(message.contains("DA"))
   }
 }
+
+///|
+test "release manifest summarizes a ready project" {
+  let report = match @moonseal.analyze_project("fixtures/well_tested") {
+    Ok(value) => value
+    Err(err) => abort(@moonseal.format_error(err))
+  }
+  let gate = @moonseal.evaluate_gate(report, @moonseal.default_policy())
+  let api = @moonseal.analyze_api_coverage("fixtures/well_tested", report)
+  let manifest = @moonseal.make_release_manifest(report, gate, api)
+  assert_true(@moonseal.manifest_is_ready(manifest))
+  assert_eq(manifest.schema_version, 1)
+  assert_eq(manifest.checks.length(), 6)
+  assert_true(@moonseal.render_release_manifest(manifest).contains("READY"))
+  assert_true(manifest.to_json().stringify().contains("api_coverage"))
+}
+
+///|
+test "release manifest preserves failed gate evidence" {
+  let report = match @moonseal.analyze_project("fixtures/untested") {
+    Ok(value) => value
+    Err(err) => abort(@moonseal.format_error(err))
+  }
+  let gate = @moonseal.evaluate_gate(report, @moonseal.default_policy())
+  let api = @moonseal.analyze_api_coverage("fixtures/untested", report)
+  let manifest = @moonseal.make_release_manifest(report, gate, api)
+  assert_false(@moonseal.manifest_is_ready(manifest))
+  assert_true(manifest.failed_checks > 0)
+  assert_true(@moonseal.render_release_manifest(manifest).contains("NOT READY"))
+}
+
+///|
+test "release manifest JSON round trip preserves checks" {
+  let report = match @moonseal.analyze_project("fixtures/well_tested") {
+    Ok(value) => value
+    Err(err) => abort(@moonseal.format_error(err))
+  }
+  let gate = @moonseal.evaluate_gate(report, @moonseal.default_policy())
+  let api = @moonseal.analyze_api_coverage("fixtures/well_tested", report)
+  let original = @moonseal.make_release_manifest(report, gate, api)
+  let decoded = match
+    @moonseal.parse_release_manifest(original.to_json().stringify()) {
+    Ok(value) => value
+    Err(message) => abort(message)
+  }
+  assert_eq(decoded.project, original.project)
+  assert_eq(decoded.failed_checks, 0)
+  assert_eq(decoded.checks.length(), 6)
+  assert_eq(@moonseal.manifest_check(decoded, "api").status, "pass")
+}
+
+///|
+test "release manifest parser rejects missing checks" {
+  let malformed = @moonseal.parse_release_manifest(
+    (
+      #|{"schema_version":1,"project":"demo","version":"0.1.0","repository":"","source_files":1,"test_files":1,"api_coverage":0,"gate_passed":false,"failed_checks":1}
+    ),
+  )
+  match malformed {
+    Ok(_) => assert_true(false)
+    Err(message) => assert_true(message.contains("checks"))
+  }
+}
+
+///|
+test "release manifest exposes reviewer-friendly summaries" {
+  let report = match @moonseal.analyze_project("fixtures/well_tested") {
+    Ok(value) => value
+    Err(err) => abort(@moonseal.format_error(err))
+  }
+  let gate = @moonseal.evaluate_gate(report, @moonseal.default_policy())
+  let manifest = @moonseal.make_release_manifest(
+    report,
+    gate,
+    @moonseal.analyze_api_coverage("fixtures/well_tested", report),
+  )
+  assert_eq(@moonseal.manifest_pass_rate(manifest), 100)
+  assert_eq(@moonseal.manifest_failed_ids(manifest).length(), 0)
+  assert_true(
+    @moonseal.render_release_manifest_markdown(manifest).contains("| Check |"),
+  )
+  assert_eq(@moonseal.manifest_status(manifest), "ready")
+  assert_eq(@moonseal.manifest_failure_summary(manifest), "none")
+  assert_eq(@moonseal.manifest_check_ids(manifest).length(), 6)
+  assert_true(@moonseal.manifest_has_check(manifest, "gate"))
+  assert_true(@moonseal.manifest_is_complete(manifest))
+}
