@@ -46,7 +46,7 @@ jobs:
         run: |
           moon fmt --check
           moon info
-          git diff --ignore-all-space --exit-code
+          git diff --ignore-blank-lines --exit-code
 
       - name: Run moon test
         run: moon test --target js
